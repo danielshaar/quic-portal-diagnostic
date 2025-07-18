@@ -96,9 +96,10 @@ async def run_client(coord_dict: modal.Dict, small_payloads: bool, use_random_de
             logger.info(f"Received response {message_count}")
 
         message_count += 1
-        delay = random.choice([0, 0.1, 0.25, 1, 10, 120])
-        logger.info(f"Sleeping for {delay} seconds")
-        await asyncio.sleep(delay)
+        if use_random_delay:
+            delay = random.choice([0, 0.1, 0.25, 1, 10, 120])
+            logger.info(f"Sleeping for {delay} seconds")
+            await asyncio.sleep(delay)
 
 
 async def run_portal(small_payloads: bool = False, use_random_delay: bool = False, port: int = 5555):
