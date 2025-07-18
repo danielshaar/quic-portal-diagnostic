@@ -20,7 +20,7 @@ if not logger.handlers:
     logger.addHandler(handler)
     logger.propagate = False
 
-app = modal.App("pi-repro", image=modal.Image.debian_slim().pip_install("quic-portal==0.1.10"))
+app = modal.App("pi-repro", image=modal.Image.debian_slim().pip_install("quic-portal==0.1.11"))
 
 
 @app.function(timeout=20 * 60 * 60, region="us-east-1")
