@@ -24,7 +24,7 @@ app = modal.App("pi-repro", image=modal.Image.debian_slim().pip_install("quic-po
 
 
 @app.function(timeout=20 * 60 * 60, region="us-sanjose-1")
-async def run_server(coord_dict: modal.Dict, small_payloads: bool):
+async def run_server(coord_dict: modal.Dict, small_payloads: bool, use_random_delay: bool, port: int):
     logger.info(f"Starting server {os.getenv('MODAL_TASK_ID')}")
     transport_options = QuicTransportOptions(
         max_idle_timeout_secs=20,
@@ -32,7 +32,7 @@ async def run_server(coord_dict: modal.Dict, small_payloads: bool):
         initial_window=1024 * 1024,  # 1MiB
         keep_alive_interval_secs=1,
     )
-    portal = Portal.create_server(dict=coord_dict, local_port=5555, transport_options=transport_options)
+    portal = Portal.create_server(dict=coord_dict, local_port=port, transport_options=transport_options)
     logger.info("Connected! Waiting for messages")
 
     message_count = 0
@@ -44,7 +44,7 @@ async def run_server(coord_dict: modal.Dict, small_payloads: bool):
             portal.close()
             return
 
-        if message_count % 100 == 0:
+        if use_random_delay or message_count % 100 == 0:
             logger.info(f"Received message {message_count}")
 
         await asyncio.sleep(0.05)  # Delay to simulate processing time.
@@ -55,13 +55,13 @@ async def run_server(coord_dict: modal.Dict, small_payloads: bool):
             portal.close()
             return
         
-        if message_count % 100 == 0:
+        if use_random_delay or message_count % 100 == 0:
             logger.info(f"Sent response {message_count}")
 
         message_count += 1
 
 
-async def run_client(coord_dict: modal.Dict, small_payloads: bool):
+async def run_client(coord_dict: modal.Dict, small_payloads: bool, use_random_delay: bool, port: int):
     logger.info("Starting client")
     transport_options = QuicTransportOptions(
         max_idle_timeout_secs=20,
@@ -69,12 +69,12 @@ async def run_client(coord_dict: modal.Dict, small_payloads: bool):
         initial_window=1024 * 1024,  # 1MiB
         keep_alive_interval_secs=1,
     )
-    portal = Portal.create_client(dict=coord_dict, local_port=5556, transport_options=transport_options)
+    portal = Portal.create_client(dict=coord_dict, local_port=port, transport_options=transport_options)
     logger.info("Connected! Sending messages")
 
     message_count = 0
     while True:
-        if message_count % 100 == 0:
+        if use_random_delay or message_count % 100 == 0:
             logger.info(f"Sending message {message_count}")
 
         try:
@@ -91,28 +91,31 @@ async def run_client(coord_dict: modal.Dict, small_payloads: bool):
             portal.close()
             return
         
-        if message_count % 100 == 0:
+        if use_random_delay or message_count % 100 == 0:
             logger.info(f"Received response {message_count}")
 
         message_count += 1
+        delay = random.choice([0, 0.1, 0.25, 1, 10, 120])
+        logger.info(f"Sleeping for {delay} seconds")
+        await asyncio.sleep(delay)
 
 
-async def run_portal(small_payloads: bool = False):
+async def run_portal(small_payloads: bool = False, use_random_delay: bool = False, port: int = 5555):
     logger.info("Starting portal run")
     
     with modal.Dict.ephemeral() as coord_dict:
-        logger.info("Spawning server")
-        run_server.spawn(coord_dict, small_payloads)
+        logger.info(f"Spawning server on {port=}")
+        run_server.spawn(coord_dict, small_payloads, use_random_delay, port)
         await asyncio.sleep(2)  # Give server time to start.
 
-        logger.info("Starting client")
-        await run_client(coord_dict, small_payloads)
+        logger.info(f"Starting client on {port=}")
+        await run_client(coord_dict, small_payloads, use_random_delay, port + 1)
 
 
-async def main(small_payloads: bool):
+async def main(small_payloads: bool, port: int):
     while True:
         try:
-            await run_portal(small_payloads)
+            await run_portal(small_payloads, port)
         except Exception as e:
             logger.error(f"Run stopped due to: {e}")
             continue
@@ -128,7 +131,19 @@ if __name__ == "__main__":
         action="store_true",
         help="Use small payloads instead of large ones",
     )
+    parser.add_argument(
+        "--use-random-delay",
+        default=False,
+        action="store_true",
+        help="Use random delay between messages",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=5555,
+        help="Port to use for the QUIC server/client (default: 5555)",
+    )
     args = parser.parse_args()
     
     with app.run():
-        asyncio.run(main(args.small_payloads))
+        asyncio.run(main(args.small_payloads, args.use_random_delay, args.port))
