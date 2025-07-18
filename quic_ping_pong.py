@@ -23,7 +23,7 @@ if not logger.handlers:
 app = modal.App("pi-repro", image=modal.Image.debian_slim().pip_install("quic-portal==0.1.11"))
 
 
-@app.function(timeout=20 * 60 * 60, region="us-east-1")
+@app.function(timeout=20 * 60 * 60, region="us-sanjose-1")
 async def run_server(coord_dict: modal.Dict, small_payloads: bool):
     logger.info(f"Starting server {os.getenv('MODAL_TASK_ID')}")
     transport_options = QuicTransportOptions(
