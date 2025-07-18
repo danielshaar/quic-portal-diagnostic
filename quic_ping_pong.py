@@ -32,7 +32,6 @@ async def run_server(coord_dict: modal.Dict, small_payloads: bool):
         initial_window=1024 * 1024,  # 1MiB
         keep_alive_interval_secs=1,
     )
-    logger.info(f"{transport_options=}")
     portal = Portal.create_server(dict=coord_dict, local_port=5555, transport_options=transport_options)
     logger.info("Connected! Waiting for messages")
 
@@ -70,7 +69,6 @@ async def run_client(coord_dict: modal.Dict, small_payloads: bool):
         initial_window=1024 * 1024,  # 1MiB
         keep_alive_interval_secs=1,
     )
-    logger.info(f"{transport_options=}")
     portal = Portal.create_client(dict=coord_dict, local_port=5556, transport_options=transport_options)
     logger.info("Connected! Sending messages")
 
