@@ -105,12 +105,14 @@ async def run_portal(small_payloads: bool = False, use_random_delay: bool = Fals
     logger.info("Starting portal run")
     
     with modal.Dict.ephemeral() as coord_dict:
-        logger.info(f"Spawning server on {port=}")
-        run_server.spawn(coord_dict, small_payloads, use_random_delay, port)
+        server_port = port
+        logger.info(f"Spawning server on {server_port=}")
+        run_server.spawn(coord_dict, small_payloads, use_random_delay, server_port)
         await asyncio.sleep(2)  # Give server time to start.
 
-        logger.info(f"Starting client on {port=}")
-        await run_client(coord_dict, small_payloads, use_random_delay, port + 1)
+        client_port = port + 1
+        logger.info(f"Starting client on {client_port=}")
+        await run_client(coord_dict, small_payloads, use_random_delay, client_port)
 
 
 async def main(small_payloads: bool, use_random_delay: bool, port: int):
