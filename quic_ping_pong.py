@@ -124,5 +124,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     
-    with modal.enable_output(), app.run():
+    with app.run():
         asyncio.run(main(args.small_payloads))
