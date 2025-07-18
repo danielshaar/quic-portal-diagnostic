@@ -9,6 +9,7 @@ import asyncio
 import logging
 import modal
 import os
+import random
 
 from quic_portal import Portal, QuicTransportOptions
 
