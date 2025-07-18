@@ -112,10 +112,10 @@ async def run_portal(small_payloads: bool = False, use_random_delay: bool = Fals
         await run_client(coord_dict, small_payloads, use_random_delay, port + 1)
 
 
-async def main(small_payloads: bool, port: int):
+async def main(small_payloads: bool, use_random_delay: bool, port: int):
     while True:
         try:
-            await run_portal(small_payloads, port)
+            await run_portal(small_payloads, use_random_delay, port)
         except Exception as e:
             logger.error(f"Run stopped due to: {e}")
             continue
