@@ -44,7 +44,7 @@ async def run_server(coord_dict: modal.Dict, small_payloads: bool):
             portal.close()
             return
 
-        if message_count % 100:
+        if message_count % 100 == 0:
             logger.info(f"Received message {message_count}")
 
         await asyncio.sleep(0.05)  # Delay to simulate processing time.
