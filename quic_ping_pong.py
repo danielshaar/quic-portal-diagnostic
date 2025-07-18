@@ -41,20 +41,24 @@ async def run_server(coord_dict: modal.Dict, small_payloads: bool):
         try:
             data = portal.recv()
         except Exception as e:
-            logger.error(f"Error receiving message: {e}")
+            logger.error(f"Error receiving message {message_count}: {e}")
             portal.close()
             return
 
-        logger.info(f"Received message {message_count}")
+        if message_count % 100:
+            logger.info(f"Received message {message_count}")
+
         await asyncio.sleep(0.05)  # Delay to simulate processing time.
         try:
             portal.send(b"b" * (1 if small_payloads else 60_000))
         except Exception as e:
-            logger.error(f"Error sending response: {e}")
+            logger.error(f"Error sending response {message_count}: {e}")
             portal.close()
             return
         
-        logger.info(f"Sent response {message_count}")
+        if message_count % 100 == 0:
+            logger.info(f"Sent response {message_count}")
+
         message_count += 1
 
 
@@ -72,22 +76,26 @@ async def run_client(coord_dict: modal.Dict, small_payloads: bool):
 
     message_count = 0
     while True:
-        logger.info(f"Sending message {message_count}")
+        if message_count % 100 == 0:
+            logger.info(f"Sending message {message_count}")
+
         try:
             portal.send(b"a" * (1 if small_payloads else 500_000))
         except Exception as e:
-            logger.error(f"Error sending message: {e}")
+            logger.error(f"Error sending message {message_count}: {e}")
             portal.close()
             return
 
         try:
             _ = portal.recv()
         except Exception as e:
-            logger.error(f"Error receiving response: {e}")
+            logger.error(f"Error receiving response {message_count}: {e}")
             portal.close()
             return
         
-        logger.info(f"Received response {message_count}")
+        if message_count % 100 == 0:
+            logger.info(f"Received response {message_count}")
+
         message_count += 1
 
 
